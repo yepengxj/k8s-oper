@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"/>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <link rel="stylesheet" type="text/css" href="codebase/app/common.css"/>
+        <link rel="stylesheet" type="text/css" href="codebase/app/loader.css"/>
+        <link rel="stylesheet" type="text/css" href="codebase/dhtmlx/dhtmlx.css"/>
+        <script  type="text/javascript" src="codebase/dhtmlx/dhtmlx.js"></script>
+        <script  type="text/javascript" src="codebase/dhtmlx/dhtmlx_ext.js"></script>
+
+        <style>
+                html, body {
+                        width: 100%;
+                        height: 100%;
+                        margin: 0px;
+                        padding: 0px;
+                        background-color: #ebebeb;
+                        overflow: hidden;
+                }
+        </style>
+        <script>
+                var myLayout, buildForm, repoGrid, imageGrid, deployGird, svcGrid, routeGrid;
+
+                function GetRequest() { 
+                    var url = location.search; //获取url中"?"符后的字串 
+                    var theRequest = new Object(); 
+                    if (url.indexOf("?") != -1) { 
+                        var str = url.substr(1); 
+                        strs = str.split("&"); 
+                        for(var i = 0; i < strs.length; i ++) { 
+                            theRequest[strs[i].split("=")[0]]=unescape(strs[i].split("=")[1]); 
+                        } 
+                     }  
+                     else
+                     {
+                        theRequest = null
+                     }
+
+                     return theRequest; 
+                } 
+
+                function doOnLoad() {
+                        myLayout = new dhtmlXLayoutObject({
+                                parent: document.body,
+                                pattern: "3T"
+                        });
+                        myLayout.cells('a').hideHeader()
+                        myLayout.cells('b').setText("image repo")
+                        myLayout.cells('c').hideHeader()
+                        myLayout.cells("a").setHeight(100);
+                        myLayout.cells("b").setWidth(600);
+                        //myLayout.cells("b").fixSize(true, true);
+
+			myTabbar=myLayout.cells("a").attachTabbar({
+			    tabs: [
+			        { id: "a1", text: "BUILD", active: true },
+			        { id: "a2", text: "SHIP&RUN" },
+			        { id: "a3", text: "INNER_SERVICE" },
+			        { id: "a4", text: "OUTTER_SERVICE" },
+			    ]
+			});
+                        buildForm = myTabbar.tabs("a1").attachForm();
+                        buildForm.loadStruct( [
+			          {type: "newcolumn",name:"offset1", offset:200},
+				  {type: "block", blockOffset: 0,name:"block1", list: [
+                                  {type: "input", name: "repo_name", label: "repo_name", value: ""}, {type: "newcolumn",offset:50},
+                                  {type: "input", name: "git_url", label: "git_url",inputWidth:500 },{type: "newcolumn",offset:50}]},
+				  {type: "block", blockOffset: 0,name:"block2", list: [
+                                      {type: "button",name:"create_repo", value: "Proceed"}
+				  ]}
+                           ],"json")
+
+			buildForm.attachEvent("onButtonClick",
+			    function(name){
+			        alert("onButtonClick event called, item name '"+name+"'<br>");
+				repodata = {"repo_name": buildForm.getItemValue("repo_name"), "git_url":buildForm.getItemValue("git_url")};
+				alert(repodata);
+                                dhx.ajax().post("/alauda/api/v1.0/new_repo",
+                                    repodata,
+				    function(text,xml)
+				    {
+				         alert(text)
+					 repoGrid.clearAll();
+					 repoGrid.load("/alauda/api/v1.0/list_repo", "js");
+					 repoGrid.selectRow(0,true,false,true);
+                                    });
+			       }
+	                );
+
+                        deployForm = myTabbar.tabs("a2").attachForm();
+                        deployForm.loadStruct( [
+			          {type: "newcolumn",name:"offset1", offset:200},
+				  {type: "block", blockOffset: 0,name:"block1", list: [
+                                  {type: "input", name: "env", label: "env",inputWidth:500, value: ""}, {type: "newcolumn",offset:50},
+                                  {type: "input", name: "command", label: "command", value: "" },{type: "newcolumn",offset:50}]},
+				  {type: "block", blockOffset: 0,name:"block2", list: [
+                                      {type: "button",name:"deploy_repo", value: "Proceed"}
+				  ]}
+                           ],"json")
+
+			deployForm.attachEvent("onButtonClick",
+			    function(name){
+				row_id = repoGrid.getSelectedRowId()
+				row_index = repoGrid.getRowIndex(row_id)
+				repodata = {"env": deployForm.getItemValue("env"),
+				            "command":deployForm.getItemValue("command"),
+					   "project_name":"paas-trainning",
+					   "repo_name":repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue() };
+				alert(repodata);
+                                dhx.ajax().post("/k8s/api/v1.0/deploy",
+                                    repodata,
+				    function(text,xml)
+				    {
+					 deployGrid.clearAll();
+					 deployGrid.load("/k8s/api/v1.0/list_deploy?repo_name=" + repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue(),
+					 "js");
+                                    });
+			       }
+	                );
+
+                        svcForm = myTabbar.tabs("a3").attachForm();
+                        svcForm.loadStruct( [
+			          {type: "newcolumn",name:"offset1", offset:200},
+				  {type: "block", blockOffset: 0,name:"block1", list: [
+                                  {type: "input", name: "svcname", label: "servicename",inputWidth:100, value: ""}, {type: "newcolumn",offset:50},
+                                  {type: "input", name: "port", label: "port",inputWidth:50, value: ""}, {type: "newcolumn",offset:50}
+                                  ]},
+				  {type: "block", blockOffset: 0,name:"block2", list: [
+                                      {type: "button",name:"create_svc", value: "Proceed"}
+				  ]}
+                           ],"json")
+
+			svcForm.attachEvent("onButtonClick",
+			    function(name){
+				repodata = {"svcname": svcForm.getItemValue("svcname"),
+				            "port":svcForm.getItemValue("port"),
+					   "project_name":"paas-trainning",
+					   "repo_name":repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue() };
+
+                                dhx.ajax().post("/k8s/api/v1.0/svc",
+                                    repodata,
+				    function(text,xml)
+				    {
+					 svcGrid.clearAll();
+					 svcGrid.load("/k8s/api/v1.0/list_svc?repo_name=" + repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue(),
+					 "js");
+                                    });
+			       }
+	                );
+
+                        routerForm = myTabbar.tabs("a4").attachForm();
+                        routerForm.loadStruct( [
+			          {type: "newcolumn",name:"offset1", offset:200},
+				  {type: "block", blockOffset: 0,name:"block1", list: [
+                                  {type: "input", name: "hostname", label: "hostname",inputWidth:500, value: ""}, {type: "newcolumn",offset:50}
+                                  ]},
+				  {type: "block", blockOffset: 0,name:"block2", list: [
+                                      {type: "button",name:"create_route", value: "Proceed"}
+				  ]}
+                           ],"json")
+
+			routerForm.attachEvent("onButtonClick",
+			    function(name){
+			        alert("onButtonClick event called, item name '"+name+"'<br>");
+				repodata = {"hostname": routerForm.getItemValue("hostname"),
+					   "project_name":"paas-trainning",
+					   "repo_name":repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue() };
+				alert(repodata);
+
+                                dhx.ajax().post("/k8s/api/v1.0/router",
+                                    repodata,
+				    function(text,xml)
+				    {
+					 routeGrid.clearAll();
+					 routeGrid.load("/k8s/api/v1.0/list_router?repo_name=" + repoGrid.cells(repoGrid.getSelectedRowId() , 0).getValue(), "js");
+                                    });
+			       }
+	                );
+
+			repoMenu = new dhtmlXMenuObject();
+			repoMenu.renderAsContextMenu();
+			repoMenu.loadStruct([{id:"build",text:"build"}]);
+			repoMenu.attachEvent("onClick",onButtonClick)
+
+
+                        repoGrid = myLayout.cells("b").attachGrid();
+                        repoGrid.setHeader("repo_name,created_at,pushed_at,download");
+                        repoGrid.setColumnIds("repo_name,created_at,pushed_at,download");
+                        repoGrid.setColSorting("str,str,str,str");
+                        repoGrid.setColTypes("ro,ro,ro,ro");
+                        repoGrid.setInitWidths("*,*,*,*");
+			repoGrid.enableContextMenu(repoMenu);
+                        repoGrid.init();
+
+                        repoGrid.attachEvent("onRowSelect", function(id,ind){
+                                 // your code here
+			  repoGrid.cells(id,0).getValue();
+			  imageGrid.clearAll(); 
+			  imageGrid.load("/alauda/api/v1.0/list_build?repo_name="+repoGrid.cells(id,0).getValue(),"js");
+			  deployGrid.clearAll(); 
+			  deployGrid.load("/k8s/api/v1.0/list_deploy?repo_name=" + repoGrid.cells( id, 0).getValue(), "js");
+			  svcGrid.clearAll();
+			  svcGrid.load("/k8s/api/v1.0/list_svc?repo_name=" + repoGrid.cells( id , 0).getValue(), "js");
+			  routeGrid.clearAll();
+			  routeGrid.load("/k8s/api/v1.0/list_router?repo_name=" + repoGrid.cells(id , 0).getValue(), "js");
+                        });
+
+                        repoGrid.load("/alauda/api/v1.0/list_repo",
+                                function(){
+				      repoGrid.selectRow(0,true,false,true);
+                                 }, "js" )
+                        
+			subLayout = myLayout.cells("c").attachLayout({
+			    pattern: "4E",
+			    cells: [
+			        {id: "a", text: "build status"},
+			        {id: "b", text: "deployconfigs"},
+			        {id: "c", text: "services"},
+			        {id: "d", text: "routes"}
+			    ]
+			});
+
+                        imageGrid = subLayout.cells("a").attachGrid();
+
+                        imageGrid.setHeader("created_at,started_at,ended_at,status,build_cache_enabled");
+                        imageGrid.setColumnIds("created_at,started_at,ended_at,status,build_cache_enabled");
+                        imageGrid.setInitWidths("*,*,*,*,*");
+                        imageGrid.setColAlign("right,left,left,left,left");
+                        imageGrid.setColTypes("ro,ro,ro,ro,ro");
+                        imageGrid.setColSorting("str,str,str,str,str");
+                        imageGrid.init();
+                        //imageGrid.load("/alauda/api/v1.0/list_build","js");
+
+                        deployGrid = subLayout.cells("b").attachGrid();
+
+                        deployGrid.setHeader("image,triggers");
+                        deployGrid.setColumnIds("image,triggers");
+                        deployGrid.setInitWidths("*,*");
+                        deployGrid.setColAlign("right,left");
+                        deployGrid.setColTypes("ro,ro");
+                        deployGrid.setColSorting("str,str");
+                        deployGrid.init();
+
+                        svcGrid = subLayout.cells("c").attachGrid();
+
+                        svcGrid.setHeader("selector,port,targetPort");
+                        svcGrid.setColumnIds("selector,port,targetPort");
+                        svcGrid.setInitWidths("*,*,*");
+                        svcGrid.setColAlign("right,left,left");
+                        svcGrid.setColTypes("ro,ro,ro");
+                        svcGrid.setColSorting("str,str,str");
+                        svcGrid.init();
+
+                        routeGrid = subLayout.cells("d").attachGrid();
+
+                        routeGrid.setHeader("hostname,to_service");
+                        routeGrid.setColumnIds("hostname,to_service");
+                        routeGrid.setInitWidths("*,*");
+                        routeGrid.setColAlign("right,left");
+                        routeGrid.setColTypes("ro,ro");
+                        routeGrid.setColSorting("str,str");
+                        routeGrid.init();
+
+
+                        //console.log("test");
+                }
+                
+		//start_build
+
+		function onButtonClick(menuitemId,type){
+		    var data = repoGrid.contextID.split("_"); //rowId_colInd
+		    alert(data)
+		    alert(menuitemId)
+		    alert(repoGrid.cells(data[0],0).getValue())
+                    repodata = {"repo_name": repoGrid.cells(data[0],0).getValue() };
+		    dhx.ajax().post("/alauda/api/v1.0/start_build",
+		    repodata,
+		    function(text,xml)
+		    {
+		        var obj = dhx.DataDriver.json.toObject(text,xml);
+		        console.log(obj);
+		        repoGrid.clearAll();
+		        repoGrid.load("/alauda/api/v1.0/list_build?repo_name=" + repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue()  ,function(){
+			    
+			} ,"js");
+		    });
+
+		    return true
+		}
+
+               function dh_monitor()
+               {
+                   req = GetRequest(); 
+                   if(req != null) 
+                   {
+                       setInterval('doOnLoad()',5000);
+                   }
+                   else
+                   {
+                       setTimeout('doOnLoad()',0);
+                   }
+               }
+               
+                 dh_monitor();
+        </script>
+</head>
+
+<body>
+</body>
+
+</html>

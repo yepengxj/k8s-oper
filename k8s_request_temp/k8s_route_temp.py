@@ -1,0 +1,1 @@
+{"kind":"Route","apiVersion":"v1","metadata":{"name":"grafana-docker","creationTimestamp":null,"labels":{"run":"grafana-docker"}},"spec":{"host":"testst","to":{"kind":"Service","name":"grafana-docker"}},"status":{}}

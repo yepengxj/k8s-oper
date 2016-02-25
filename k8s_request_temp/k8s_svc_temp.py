@@ -1,0 +1,1 @@
+{"kind":"Service","apiVersion":"v1","metadata":{"name":"docker-2048","creationTimestamp":null,"labels":{"run":"docker-2048"}},"spec":{"ports":[{"protocol":"TCP","port":80,"targetPort":80}],"selector":{"run":"docker-2048"},"type":"ClusterIP","sessionAffinity":"None"},"status":{"loadBalancer":{}}}
