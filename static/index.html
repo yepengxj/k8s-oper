@@ -74,14 +74,11 @@
 
 			buildForm.attachEvent("onButtonClick",
 			    function(name){
-			        alert("onButtonClick event called, item name '"+name+"'<br>");
 				repodata = {"repo_name": buildForm.getItemValue("repo_name"), "git_url":buildForm.getItemValue("git_url")};
-				alert(repodata);
                                 dhx.ajax().post("/alauda/api/v1.0/new_repo",
                                     repodata,
 				    function(text,xml)
 				    {
-				         alert(text)
 					 repoGrid.clearAll();
 					 repoGrid.load("/alauda/api/v1.0/list_repo", "js");
 					 repoGrid.selectRow(0,true,false,true);
@@ -108,7 +105,6 @@
 				            "command":deployForm.getItemValue("command"),
 					   "project_name":"paas-trainning",
 					   "repo_name":repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue() };
-				alert(repodata);
                                 dhx.ajax().post("/k8s/api/v1.0/deploy",
                                     repodata,
 				    function(text,xml)
@@ -163,11 +159,9 @@
 
 			routerForm.attachEvent("onButtonClick",
 			    function(name){
-			        alert("onButtonClick event called, item name '"+name+"'<br>");
 				repodata = {"hostname": routerForm.getItemValue("hostname"),
 					   "project_name":"paas-trainning",
 					   "repo_name":repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue() };
-				alert(repodata);
 
                                 dhx.ajax().post("/k8s/api/v1.0/router",
                                     repodata,
@@ -271,18 +265,14 @@
 
 		function onButtonClick(menuitemId,type){
 		    var data = repoGrid.contextID.split("_"); //rowId_colInd
-		    alert(data)
-		    alert(menuitemId)
-		    alert(repoGrid.cells(data[0],0).getValue())
                     repodata = {"repo_name": repoGrid.cells(data[0],0).getValue() };
 		    dhx.ajax().post("/alauda/api/v1.0/start_build",
 		    repodata,
 		    function(text,xml)
 		    {
 		        var obj = dhx.DataDriver.json.toObject(text,xml);
-		        console.log(obj);
-		        repoGrid.clearAll();
-		        repoGrid.load("/alauda/api/v1.0/list_build?repo_name=" + repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue()  ,function(){
+		        imageGrid.clearAll();
+		        imageGrid.load("/alauda/api/v1.0/list_build?repo_name=" + repoGrid.cells( repoGrid.getSelectedRowId() , 0).getValue()  ,function(){
 			    
 			} ,"js");
 		    });
