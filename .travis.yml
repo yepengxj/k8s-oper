@@ -1,0 +1,15 @@
+sudo: required
+
+language: python
+python:
+  - 2.7
+
+services:
+  - docker
+
+script:
+  - sh ./test.sh
+  - docker build -t index.alauda.cn/asiainfoldp/d8s_oper_ci .
+  - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" index.alauda.cn
+  - docker push index.alauda.cn/asiainfoldp/d8s_oper_ci
+
