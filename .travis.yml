@@ -12,3 +12,6 @@ after_install:
   - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" index.alauda.cn
   - docker push index.alauda.cn/asiainfoldp/d8s_oper_ci
 
+script:
+  - sh ./test.sh
+
