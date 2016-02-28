@@ -11,3 +11,4 @@ after_install:
   - docker build -t index.alauda.cn/asiainfoldp/d8s_oper_ci .
   - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD" index.alauda.cn
   - docker push index.alauda.cn/asiainfoldp/d8s_oper_ci
+
